@@ -15,6 +15,7 @@
             justify-content: center; 
             padding: 20px; 
             margin: 0;
+            user-select: none; /* Evita que seleccionen texto fácilmente */
         }
 
         .card { 
@@ -353,7 +354,6 @@
     function descargarExcel() {
         if (datosGuias.length === 0) return alert("No hay guías para descargar");
         
-        // Captura siempre la fecha y hora actual al presionar el botón
         const ahora = new Date();
         const yyyy = ahora.getFullYear();
         const mm = String(ahora.getMonth() + 1).padStart(2, '0');
@@ -381,6 +381,22 @@
     }
 
     input.addEventListener("keypress", (e) => { if (e.key === "Enter") agregarGuia(); });
+
+    // --- BLOQUEO DE SEGURIDAD INTEGRADO ---
+    
+    // 1. Deshabilitar Clic Derecho
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 2. Deshabilitar Teclas de Inspección (F12, Ctrl+Shift+I, etc.)
+    document.onkeydown = function(e) {
+        if (
+            e.key === "F12" || 
+            (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) || 
+            (e.ctrlKey && e.key === "u")
+        ) {
+            return false;
+        }
+    };
 </script>
 
 </body>
