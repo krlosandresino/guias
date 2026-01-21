@@ -3,190 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de guias</title>
+    <title>Registro de guias - En Nube</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #f4f7f6; 
-            color: #333; 
-            display: flex; 
-            justify-content: center; 
-            padding: 20px; 
-            margin: 0;
-            user-select: none; /* Evita que seleccionen texto fácilmente */
-        }
-
-        .card { 
-            background: #ffffff; 
-            padding: 2rem; 
-            border-radius: 12px; 
-            width: 100%; 
-            max-width: 550px; 
-            border: 1px solid #e0e0e0; 
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        
-        .contador-badge { 
-            position: absolute; 
-            top: 15px; 
-            right: 15px; 
-            background: #2e7d32; 
-            color: white; 
-            padding: 5px 15px; 
-            border-radius: 20px; 
-            font-weight: bold; 
-            font-size: 0.85rem; 
-        }
-        
+        /* (El estilo se mantiene idéntico al original para no afectar el diseño) */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; display: flex; justify-content: center; padding: 20px; margin: 0; user-select: none; }
+        .card { background: #ffffff; padding: 2rem; border-radius: 12px; width: 100%; max-width: 550px; border: 1px solid #e0e0e0; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .contador-badge { position: absolute; top: 15px; right: 15px; background: #2e7d32; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
         h1 { text-align: center; color: #1a1a1a; font-size: 1.5rem; margin-bottom: 1.5rem; }
-        
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #eee;
-        }
-
-        .stat-card {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-        }
-
+        .stats-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #eee; }
+        .stat-card { text-align: center; display: flex; flex-direction: column; }
         .stat-val { font-size: 1.2rem; font-weight: bold; margin-bottom: 2px; }
         .stat-label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #666; }
-        
-        .val-urbano { color: #f44336; }
-        .val-laar { color: #ff9800; }
-        .val-servi { color: #4caf50; }
-
+        .val-urbano { color: #f44336; } .val-laar { color: #ff9800; } .val-servi { color: #4caf50; }
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
         .input-row { display: flex; gap: 8px; }
-        
-        input { 
-            flex: 1; 
-            padding: 12px; 
-            border-radius: 6px; 
-            border: 1px solid #ccc; 
-            font-size: 16px; 
-            outline: none; 
-        }
+        input { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; outline: none; }
         input:focus { border-color: #4caf50; }
-        
-        input.error-input { 
-            border-color: #d32f2f; 
-            background-color: #ffebee; 
-            animation: shake 0.3s;
-        }
-        
-        .error-msg {
-            color: #d32f2f;
-            font-size: 0.75rem;
-            margin-top: -5px;
-            display: none;
-            font-weight: bold;
-        }
-
-        .btn-add { 
-            padding: 12px 20px; 
-            background-color: #4caf50; 
-            color: white; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: bold; 
-        }
-
+        input.error-input { border-color: #d32f2f; background-color: #ffebee; animation: shake 0.3s; }
+        .error-msg { color: #d32f2f; font-size: 0.75rem; margin-top: -5px; display: none; font-weight: bold; }
+        .btn-add { padding: 12px 20px; background-color: #4caf50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .actions { display: flex; gap: 8px; margin-top: 20px; }
-        
-        .btn-download { 
-            flex: 2; padding: 10px; background-color: #1976D2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; 
-        }
-
-        .btn-clear { 
-            flex: 1; padding: 10px; background-color: #f5f5f5; color: #d32f2f; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; 
-        }
-        
-        #listaGuias { 
-            display: flex;
-            flex-direction: column;
-            gap: 8px; 
-            margin-top: 20px; 
-            border-top: 1px solid #eee; 
-            padding-top: 20px; 
-            max-height: 350px; 
-            overflow-y: auto; 
-        }
-
-        .guia-item { 
-            display: grid;
-            grid-template-columns: 130px 1fr 140px;
-            align-items: center;
-            background: #f9f9f9; 
-            padding: 10px; 
-            border-radius: 6px; 
-            font-family: 'Courier New', monospace; 
-            font-size: 0.85rem; 
-            border: 1px solid #eee; 
-        }
-
-        .badge-courier {
-            font-size: 0.6rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: white;
-            font-weight: bold;
-            width: 80px;
-            text-align: center;
-        }
-
-        .courier-urbano { background-color: #f44336; }
-        .courier-laar { background-color: #ff9800; }
-        .courier-servi { background-color: #4caf50; }
-
+        .btn-download { flex: 2; padding: 10px; background-color: #1976D2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-clear { flex: 1; padding: 10px; background-color: #f5f5f5; color: #d32f2f; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; }
+        #listaGuias { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; max-height: 350px; overflow-y: auto; }
+        .guia-item { display: grid; grid-template-columns: 130px 1fr 140px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 0.85rem; border: 1px solid #eee; }
+        .badge-courier { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; color: white; font-weight: bold; width: 80px; text-align: center; }
+        .courier-urbano { background-color: #f44336; } .courier-laar { background-color: #ff9800; } .courier-servi { background-color: #4caf50; }
         .hora-texto { color: #888; font-size: 0.75rem; text-align: center; }
         .guia-texto { font-weight: bold; }
-        
-        .btn-delete {
-            background: none;
-            border: none;
-            color: #d32f2f;
-            cursor: pointer;
-            font-size: 1.1rem;
-            padding: 0 5px;
-            transition: transform 0.1s;
-        }
+        .btn-delete { background: none; border: none; color: #d32f2f; cursor: pointer; font-size: 1.1rem; padding: 0 5px; transition: transform 0.1s; }
         .btn-delete:hover { transform: scale(1.2); }
-
-        .badge-repetida {
-            background-color: #d32f2f;
-            color: white;
-            font-size: 0.6rem;
-            padding: 1px 4px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-right: 5px;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
-        }
+        .badge-repetida { background-color: #d32f2f; color: white; font-size: 0.6rem; padding: 1px 4px; border-radius: 4px; font-weight: bold; margin-right: 5px; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        /* Loader simple */
+        .loading { text-align: center; color: #666; font-size: 0.8rem; padding: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="contador-badge">TOTAL: <span id="numContador">0</span></div>
-    <h1>📦 Registro de Guías</h1>
+    <h1>📦 Registro de Guías (Nube)</h1>
 
     <div class="stats-container">
         <div class="stat-card">
@@ -206,12 +65,14 @@
     <div class="input-group">
         <div class="input-row">
             <input type="text" id="nuevaGuia" placeholder="Escanee guía aquí..." autofocus autocomplete="off">
-            <button class="btn-add" onclick="agregarGuia()">Añadir</button>
+            <button class="btn-add" id="btnAgregar">Añadir</button>
         </div>
         <span id="mensajeError" class="error-msg">❌ Guía INVÁLIDA (Revisar Courier)</span>
     </div>
 
-    <div id="listaGuias"></div>
+    <div id="listaGuias">
+        <div class="loading">Cargando datos...</div>
+    </div>
 
     <div class="actions">
         <button class="btn-download" onclick="descargarExcel()">📊 Descargar Excel</button>
@@ -219,26 +80,50 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+    // Importar funciones de Firebase (Versión Modular)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        onSnapshot, 
+        deleteDoc, 
+        doc,
+        query, 
+        orderBy, 
+        getDocs,
+        writeBatch 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // --- ⚠️ PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE ⚠️ ---
+    // Reemplaza los valores de abajo con los de tu consola de Firebase
+    const firebaseConfig = {
+  apiKey: "AIzaSyBQUrlJwjHJpXiVQtVdnXyBbTbYTYlZqyI",
+  authDomain: "registroguias-d3282.firebaseapp.com",
+  projectId: "registroguias-d3282",
+  storageBucket: "registroguias-d3282.firebasestorage.app",
+  messagingSenderId: "870549572581",
+  appId: "1:870549572581:web:1f086c7b011eab647dbd0c"
+};
+    };
+
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const nombreColeccion = "guias_diarias"; // Nombre de la tabla en Firebase
+
+    // Variables Globales y DOM
     let datosGuias = [];
     const input = document.getElementById('nuevaGuia');
     const contenedor = document.getElementById('listaGuias');
     const txtContador = document.getElementById('numContador');
-    const sUrbano = document.getElementById('stat-urbano');
-    const sLaar = document.getElementById('stat-laar');
-    const sServi = document.getElementById('stat-servi');
-
+    const btnAgregar = document.getElementById('btnAgregar');
+    
+    // Audio Context
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    window.onload = function() {
-        const guardado = localStorage.getItem('misGuias');
-        if (guardado) {
-            datosGuias = JSON.parse(guardado);
-            renderizarLista();
-            actualizarContador();
-        }
-    };
-
+    // Sonidos
     function sonar(frecuencia, tipo, duracion, volumen) {
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
@@ -251,32 +136,93 @@
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + duracion);
     }
-
-    function sonarRepetida() {
-        sonar(600, 'square', 0.2, 0.1);
-        setTimeout(() => sonar(600, 'square', 0.2, 0.1), 150);
-    }
-
+    function sonarRepetida() { sonar(600, 'square', 0.2, 0.1); setTimeout(() => sonar(600, 'square', 0.2, 0.1), 150); }
     function sonarInvalida() { sonar(100, 'sawtooth', 0.6, 0.3); }
     function sonarOk() { sonar(800, 'sine', 0.1, 0.05); }
 
-    function guardarEnStorage() {
-        localStorage.setItem('misGuias', JSON.stringify(datosGuias));
+    // --- ESCUCHADOR EN TIEMPO REAL (El corazón del sistema) ---
+    // Esto hace que cuando una PC cambie algo, todas se actualicen
+    const q = query(collection(db, nombreColeccion), orderBy("Timestamp", "asc"));
+    
+    onSnapshot(q, (snapshot) => {
+        datosGuias = snapshot.docs.map(doc => ({
+            id: doc.id, // Guardamos el ID de firebase para poder borrar luego
+            ...doc.data()
+        }));
+        renderizarLista();
+        actualizarContador();
+    });
+
+    // Validaciones
+    function validarGuia(valor) {
+        if (valor.length === 11 && valor.startsWith("41")) return "URBANO";
+        if (valor.length === 10 && valor.startsWith("20")) return "LAAR";
+        if (valor.length === 9 && valor.startsWith("81")) return "SERVIENTREGA";
+        return null;
     }
 
-    function eliminarGuia(indexVisual) {
-        if (confirm("¿Eliminar este registro?")) {
-            const indexReal = datosGuias.length - 1 - indexVisual;
-            datosGuias.splice(indexReal, 1);
-            guardarEnStorage();
-            renderizarLista();
-            actualizarContador();
+    // Agregar Guía
+    async function agregarGuia() {
+        const valor = input.value.trim().toUpperCase();
+        if (valor === "") return;
+
+        const courierIdentificado = validarGuia(valor);
+
+        if (!courierIdentificado) {
+            sonarInvalida();
+            mostrarError("❌ Guía INVÁLIDA (Revisar Courier)");
+            return;
         }
+
+        // Revisamos duplicados localmente antes de enviar a nube para feedback instantáneo
+        const existe = datosGuias.some(g => g["Guia"] === valor);
+        const ahora = new Date();
+        const fechaLimpia = ahora.toLocaleDateString();
+        const horaLimpia = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const nuevaData = { 
+            "Guia": valor, 
+            "Courier": courierIdentificado, 
+            "Fecha": fechaLimpia, 
+            "Hora": horaLimpia, 
+            "Timestamp": Date.now() // Importante para ordenar
+        };
+
+        if (existe) {
+            sonarRepetida();
+            mostrarError("⚠️ Guía REPETIDA", false); // false = no sacudir rojo fuerte
+            nuevaData.Estado = "REPETIDA";
+        } else {
+            sonarOk();
+            nuevaData.Estado = "NUEVA";
+        }
+
+        try {
+            input.value = ""; // Limpiar rápido
+            input.focus();
+            await addDoc(collection(db, nombreColeccion), nuevaData);
+        } catch (e) {
+            console.error("Error al guardar: ", e);
+            alert("Error de conexión");
+        }
+    }
+
+    // Funciones de UI
+    function mostrarError(msg, shake = true) {
+        const el = document.getElementById('mensajeError');
+        el.innerText = msg;
+        el.style.display = "block";
+        if(shake) input.classList.add('error-input');
+        setTimeout(() => {
+            if(shake) input.classList.remove('error-input');
+            el.style.display = "none";
+        }, 1500);
     }
 
     function renderizarLista() {
         contenedor.innerHTML = "";
-        [...datosGuias].reverse().forEach((g, idx) => {
+        // Invertimos visualmente para ver la última arriba, pero usamos datosGuias que está ordenado por fecha
+        [...datosGuias].reverse().forEach((g) => {
             const div = document.createElement('div');
             div.className = 'guia-item';
             
@@ -291,109 +237,77 @@
                 <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
                     ${g.Estado === "REPETIDA" ? '<span class="badge-repetida">REP</span>' : ''}
                     <span class="badge-courier ${courierClass}">${g.Courier}</span>
-                    <button class="btn-delete" onclick="eliminarGuia(${idx})" title="Borrar">🗑️</button>
+                    <button class="btn-delete" data-id="${g.id}" title="Borrar">🗑️</button>
                 </div>
             `;
             contenedor.appendChild(div);
+        });
+
+        // Event listeners para botones de borrar (necesario por ser módulos)
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => eliminarGuia(e.target.dataset.id));
         });
     }
 
     function actualizarContador() {
         txtContador.textContent = datosGuias.length;
-        sUrbano.textContent = datosGuias.filter(g => g.Courier === 'URBANO').length;
-        sLaar.textContent = datosGuias.filter(g => g.Courier === 'LAAR').length;
-        sServi.textContent = datosGuias.filter(g => g.Courier === 'SERVIENTREGA').length;
+        document.getElementById('stat-urbano').textContent = datosGuias.filter(g => g.Courier === 'URBANO').length;
+        document.getElementById('stat-laar').textContent = datosGuias.filter(g => g.Courier === 'LAAR').length;
+        document.getElementById('stat-servi').textContent = datosGuias.filter(g => g.Courier === 'SERVIENTREGA').length;
     }
 
-    function validarGuia(valor) {
-        if (valor.length === 11 && valor.startsWith("41")) return "URBANO";
-        if (valor.length === 10 && valor.startsWith("20")) return "LAAR";
-        if (valor.length === 9 && valor.startsWith("81")) return "SERVIENTREGA";
-        return null;
-    }
-
-    function agregarGuia() {
-        const valor = input.value.trim().toUpperCase();
-        if (valor === "") return;
-
-        const courierIdentificado = validarGuia(valor);
-
-        if (!courierIdentificado) {
-            sonarInvalida();
-            document.getElementById('mensajeError').style.display = "block";
-            input.classList.add('error-input');
-            setTimeout(() => {
-                input.classList.remove('error-input');
-                document.getElementById('mensajeError').style.display = "none";
-            }, 1500);
-            return;
+    // Eliminar individual
+    async function eliminarGuia(idDoc) {
+        if (confirm("¿Eliminar este registro de la nube?")) {
+            try {
+                await deleteDoc(doc(db, nombreColeccion, idDoc));
+            } catch(e) {
+                alert("Error al borrar: " + e.message);
+            }
         }
-
-        const existe = datosGuias.some(g => g["Guia"] === valor);
-        const ahora = new Date();
-        const fechaLimpia = ahora.toLocaleDateString();
-        const horaLimpia = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        if (existe) {
-            sonarRepetida();
-            input.classList.add('error-input');
-            setTimeout(() => input.classList.remove('error-input'), 500);
-            datosGuias.push({ "Guia": valor, "Courier": courierIdentificado, "Fecha": fechaLimpia, "Hora": horaLimpia, "Estado": "REPETIDA" });
-        } else {
-            sonarOk();
-            datosGuias.push({ "Guia": valor, "Courier": courierIdentificado, "Fecha": fechaLimpia, "Hora": horaLimpia, "Estado": "NUEVA" });
-        }
-        
-        guardarEnStorage(); 
-        renderizarLista();
-        actualizarContador();
-        input.value = "";
-        input.focus();
     }
 
-    function descargarExcel() {
+    // Descargar Excel (Misma lógica, pero accesible globalmente)
+    window.descargarExcel = function() {
         if (datosGuias.length === 0) return alert("No hay guías para descargar");
         
         const ahora = new Date();
-        const yyyy = ahora.getFullYear();
-        const mm = String(ahora.getMonth() + 1).padStart(2, '0');
-        const dd = String(ahora.getDate()).padStart(2, '0');
-        const hh = String(ahora.getHours()).padStart(2, '0');
-        const min = String(ahora.getMinutes()).padStart(2, '0');
-        const ss = String(ahora.getSeconds()).padStart(2, '0');
+        const nombreArchivo = `Reporte_Guias_Nube.xlsx`;
+        
+        // Preparamos datos limpios para el excel (sin ID de firebase)
+        const datosLimpios = datosGuias.map(({id, Timestamp, ...resto}) => resto);
 
-        const nombreArchivo = `Reporte_Guias_${yyyy}-${mm}-${dd}_${hh}-${min}-${ss}.xlsx`;
-
-        const ws = XLSX.utils.json_to_sheet(datosGuias);
+        const ws = XLSX.utils.json_to_sheet(datosLimpios);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Reporte");
         XLSX.writeFile(wb, nombreArchivo);
     }
 
-    function limpiarTodo() {
-        if (confirm("¿Seguro que quieres borrar todo el trabajo actual?")) {
-            datosGuias = [];
-            localStorage.removeItem('misGuias');
-            renderizarLista();
-            actualizarContador();
-            input.focus();
+    // Limpiar Todo (Borrado masivo por lotes en Firebase)
+    window.limpiarTodo = async function() {
+        if (confirm("⚠️ ¿Seguro que quieres BORRAR TODO de la base de datos? Esto afectará a todas las PC.")) {
+            if(prompt("Escribe 'BORRAR' para confirmar") !== "BORRAR") return;
+
+            const q = query(collection(db, nombreColeccion));
+            const snapshot = await getDocs(q);
+            const batch = writeBatch(db);
+            
+            snapshot.docs.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+
+            await batch.commit();
         }
     }
 
+    // Listeners
+    btnAgregar.addEventListener('click', agregarGuia);
     input.addEventListener("keypress", (e) => { if (e.key === "Enter") agregarGuia(); });
 
-    // --- BLOQUEO DE SEGURIDAD INTEGRADO ---
-    
-    // 1. Deshabilitar Clic Derecho
+    // Bloqueos de seguridad
     document.addEventListener('contextmenu', e => e.preventDefault());
-
-    // 2. Deshabilitar Teclas de Inspección (F12, Ctrl+Shift+I, etc.)
     document.onkeydown = function(e) {
-        if (
-            e.key === "F12" || 
-            (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) || 
-            (e.ctrlKey && e.key === "u")
-        ) {
+        if (e.key === "F12" || (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) || (e.ctrlKey && e.key === "u")) {
             return false;
         }
     };
