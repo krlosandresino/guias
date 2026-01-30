@@ -54,10 +54,30 @@
             border: 1px solid #eee;
         }
 
-        .stat-card { text-align: center; display: flex; flex-direction: column; }
+        .stat-card { 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative;
+            padding-bottom: 5px;
+        }
         .stat-val { font-size: 1.2rem; font-weight: bold; margin-bottom: 2px; }
         .stat-label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #666; }
         
+        /* Botón para limpiar courier individual */
+        .btn-clear-mini {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            margin-top: 5px;
+            color: #d32f2f;
+            padding: 2px 0;
+            transition: all 0.2s;
+        }
+        .btn-clear-mini:hover { background: #fee; border-color: #d32f2f; }
+
         .val-urbano { color: #f44336; }
         .val-laar { color: #ff9800; }
         .val-servi { color: #4caf50; }
@@ -78,7 +98,6 @@
             color: #d32f2f; font-size: 0.75rem; margin-top: -5px; display: none; font-weight: bold;
         }
 
-        /* Notificación de Nube */
         .cloud-status {
             font-size: 0.7rem; text-align: center; height: 15px; margin-top: -15px; margin-bottom: 10px; font-weight: bold; color: #999;
         }
@@ -136,14 +155,17 @@
         <div class="stat-card">
             <span class="stat-val val-urbano" id="stat-urbano">0</span>
             <span class="stat-label">Urbano</span>
+            <button class="btn-clear-mini" onclick="limpiarCourier('URBANO')">Limpiar</button>
         </div>
         <div class="stat-card">
             <span class="stat-val val-laar" id="stat-laar">0</span>
             <span class="stat-label">Laar</span>
+            <button class="btn-clear-mini" onclick="limpiarCourier('LAAR')">Limpiar</button>
         </div>
         <div class="stat-card">
             <span class="stat-val val-servi" id="stat-servi">0</span>
             <span class="stat-label">Servi</span>
+            <button class="btn-clear-mini" onclick="limpiarCourier('SERVIENTREGA')">Limpiar</button>
         </div>
     </div>
     
@@ -166,7 +188,6 @@
 </div>
 
 <script>
-    // --- URL DEL SCRIPT DE GOOGLE (Ya actualizada) ---
     const URL_GOOGLE_SHEET = "https://script.google.com/macros/s/AKfycbzXMgPjNaY0LrZNXPyzDgNcI9Zfdmnfj8nMUVNBv-roS4KYestgXWElx4jwqoE2pwv0tA/exec";
 
     let datosGuias = [];
@@ -214,24 +235,17 @@
         localStorage.setItem('misGuias', JSON.stringify(datosGuias));
     }
 
-    // --- FUNCIÓN DE ENVÍO A LA NUBE ---
     function enviarANube(datos) {
         if (!URL_GOOGLE_SHEET) return;
-
         statusNube.innerText = "☁️ Enviando a la nube...";
         statusNube.style.color = "#1976D2";
-
-        // Usamos 'no-cors' y 'text/plain' para evitar problemas de seguridad con Google Script
         fetch(URL_GOOGLE_SHEET, {
             method: 'POST',
             mode: 'no-cors', 
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8', 
-            },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(datos)
         })
         .then(() => {
-            // Con no-cors no podemos ver la respuesta real, asumimos éxito si no hubo error de red
             statusNube.innerText = "✅ Guardado en la nube";
             statusNube.style.color = "green";
             setTimeout(() => { statusNube.innerText = "Esperando datos..."; statusNube.style.color = "#999"; }, 2000);
@@ -250,6 +264,21 @@
             guardarEnStorage();
             renderizarLista();
             actualizarContador();
+        }
+    }
+
+    // --- NUEVA FUNCIÓN PARA LIMPIAR SOLO UN COURIER ---
+    function limpiarCourier(courier) {
+        const cantidad = datosGuias.filter(g => g.Courier === courier).length;
+        if (cantidad === 0) return;
+
+        if (confirm(`¿Seguro que quieres borrar localmente las ${cantidad} guías de ${courier}?`)) {
+            // Filtramos para quedarnos solo con lo que NO sea el courier seleccionado
+            datosGuias = datosGuias.filter(g => g.Courier !== courier);
+            guardarEnStorage();
+            renderizarLista();
+            actualizarContador();
+            input.focus();
         }
     }
 
@@ -332,9 +361,7 @@
             datosGuias.push(nuevaData);
         }
         
-        // --- ENVÍO A GOOGLE SHEETS ---
         enviarANube(nuevaData);
-        
         guardarEnStorage(); 
         renderizarLista();
         actualizarContador();
@@ -344,17 +371,8 @@
 
     function descargarExcel() {
         if (datosGuias.length === 0) return alert("No hay guías para descargar");
-        
         const ahora = new Date();
-        const yyyy = ahora.getFullYear();
-        const mm = String(ahora.getMonth() + 1).padStart(2, '0');
-        const dd = String(ahora.getDate()).padStart(2, '0');
-        const hh = String(ahora.getHours()).padStart(2, '0');
-        const min = String(ahora.getMinutes()).padStart(2, '0');
-        const ss = String(ahora.getSeconds()).padStart(2, '0');
-
-        const nombreArchivo = `Reporte_Guias_${yyyy}-${mm}-${dd}_${hh}-${min}-${ss}.xlsx`;
-
+        const nombreArchivo = `Reporte_Guias_${ahora.getFullYear()}-${ahora.getMonth()+1}-${ahora.getDate()}.xlsx`;
         const ws = XLSX.utils.json_to_sheet(datosGuias);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Reporte");
@@ -372,15 +390,7 @@
     }
 
     input.addEventListener("keypress", (e) => { if (e.key === "Enter") agregarGuia(); });
-
-    // Bloqueo de seguridad básico
     document.addEventListener('contextmenu', e => e.preventDefault());
-    document.onkeydown = function(e) {
-        if (e.key === "F12" || (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) || (e.ctrlKey && e.key === "u")) {
-            return false;
-        }
-    };
 </script>
-
 </body>
 </html>
