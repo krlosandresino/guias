@@ -64,7 +64,6 @@
         .stat-val { font-size: 1.2rem; font-weight: bold; margin-bottom: 2px; }
         .stat-label { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; color: #666; }
         
-        /* Botón para limpiar courier individual */
         .btn-clear-mini {
             background: #fff;
             border: 1px solid #ddd;
@@ -191,6 +190,7 @@
     const URL_GOOGLE_SHEET = "https://script.google.com/macros/s/AKfycbzXMgPjNaY0LrZNXPyzDgNcI9Zfdmnfj8nMUVNBv-roS4KYestgXWElx4jwqoE2pwv0tA/exec";
 
     let datosGuias = [];
+    let timerBusqueda; // Timer para auto-enter
     const input = document.getElementById('nuevaGuia');
     const contenedor = document.getElementById('listaGuias');
     const txtContador = document.getElementById('numContador');
@@ -267,13 +267,11 @@
         }
     }
 
-    // --- NUEVA FUNCIÓN PARA LIMPIAR SOLO UN COURIER ---
     function limpiarCourier(courier) {
         const cantidad = datosGuias.filter(g => g.Courier === courier).length;
         if (cantidad === 0) return;
 
         if (confirm(`¿Seguro que quieres borrar localmente las ${cantidad} guías de ${courier}?`)) {
-            // Filtramos para quedarnos solo con lo que NO sea el courier seleccionado
             datosGuias = datosGuias.filter(g => g.Courier !== courier);
             guardarEnStorage();
             renderizarLista();
@@ -334,6 +332,7 @@
                 input.classList.remove('error-input');
                 document.getElementById('mensajeError').style.display = "none";
             }, 1500);
+            input.value = ""; // Limpiar para el siguiente escaneo
             return;
         }
 
@@ -389,7 +388,24 @@
         }
     }
 
-    input.addEventListener("keypress", (e) => { if (e.key === "Enter") agregarGuia(); });
+    // --- NUEVA LÓGICA PARA EVITAR EL ENTER MANUAL ---
+    input.addEventListener("input", () => {
+        clearTimeout(timerBusqueda);
+        // Cuando el lector termina de escribir (pausa de 100ms), procesa automáticamente.
+        timerBusqueda = setTimeout(() => {
+            if (input.value.trim() !== "") {
+                agregarGuia();
+            }
+        }, 100); 
+    });
+
+    input.addEventListener("keypress", (e) => { 
+        if (e.key === "Enter") {
+            clearTimeout(timerBusqueda);
+            agregarGuia(); 
+        }
+    });
+    
     document.addEventListener('contextmenu', e => e.preventDefault());
 </script>
 </body>
