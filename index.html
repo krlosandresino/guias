@@ -40,6 +40,24 @@
             font-weight: bold; 
             font-size: 0.85rem; 
         }
+
+        /* Nuevo estilo para el botón de enlace izquierdo */
+        .btn-enlace-izq {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #1976D2;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .btn-enlace-izq:hover {
+            background: #115293;
+        }
         
         h1 { text-align: center; color: #1a1a1a; font-size: 1.5rem; margin-bottom: 1.5rem; }
         
@@ -147,6 +165,7 @@
 <body>
 
 <div class="card">
+    <a href="https://drive.google.com/drive/folders/1rN2tFVe7ayAmvZYVucfhD2HPzBEbs5Xa" target="_blank" class="btn-enlace-izq">📂 Ver Guías Pitadas</a>
     <div class="contador-badge">TOTAL: <span id="numContador">0</span></div>
     <h1>📦 Pitado de pedidos</h1>
 
