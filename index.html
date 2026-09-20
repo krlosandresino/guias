@@ -41,7 +41,6 @@
             font-size: 0.85rem; 
         }
 
-        /* Nuevo estilo para el botón de enlace izquierdo */
         .btn-enlace-izq {
             position: absolute;
             top: 15px;
@@ -209,7 +208,6 @@
     const URL_GOOGLE_SHEET = "https://script.google.com/macros/s/AKfycbzXMgPjNaY0LrZNXPyzDgNcI9Zfdmnfj8nMUVNBv-roS4KYestgXWElx4jwqoE2pwv0tA/exec";
 
     let datosGuias = [];
-    let timerBusqueda; // Timer para auto-enter
     const input = document.getElementById('nuevaGuia');
     const contenedor = document.getElementById('listaGuias');
     const txtContador = document.getElementById('numContador');
@@ -220,6 +218,15 @@
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+    // --- DESBLOQUEO DE CONTEXTO DE AUDIO ---
+    function iniciarAudio() {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+    document.addEventListener('click', iniciarAudio, { once: true });
+    document.addEventListener('keydown', iniciarAudio, { once: true });
+
     window.onload = function() {
         const guardado = localStorage.getItem('misGuias');
         if (guardado) {
@@ -227,6 +234,8 @@
             renderizarLista();
             actualizarContador();
         }
+        // Iniciar revisión de pendientes offline al cargar
+        setTimeout(sincronizarPendientes, 2000);
     };
 
     function sonar(frecuencia, tipo, duracion, volumen) {
@@ -258,6 +267,9 @@
         if (!URL_GOOGLE_SHEET) return;
         statusNube.innerText = "☁️ Enviando a la nube...";
         statusNube.style.color = "#1976D2";
+        
+        datos.Sincronizado = false; // Se marca pendiente antes de intentar
+
         fetch(URL_GOOGLE_SHEET, {
             method: 'POST',
             mode: 'no-cors', 
@@ -267,14 +279,50 @@
         .then(() => {
             statusNube.innerText = "✅ Guardado en la nube";
             statusNube.style.color = "green";
+            datos.Sincronizado = true; // Actualiza el estado a exitoso
+            guardarEnStorage();
             setTimeout(() => { statusNube.innerText = "Esperando datos..."; statusNube.style.color = "#999"; }, 2000);
         })
         .catch(error => {
             console.error('Error:', error);
-            statusNube.innerText = "❌ Error de conexión";
+            statusNube.innerText = "❌ Guardado local (Pendiente de nube)";
+            statusNube.style.color = "red";
+            datos.Sincronizado = false;
+            guardarEnStorage();
+        });
+    }
+
+    // --- COLA DE SINCRONIZACIÓN OFFLINE ---
+    function sincronizarPendientes() {
+        const pendientes = datosGuias.filter(g => g.Sincronizado === false);
+        if (pendientes.length === 0) return;
+        
+        statusNube.innerText = `☁️ Sincronizando ${pendientes.length} pendientes...`;
+        statusNube.style.color = "#ff9800";
+        
+        const guiaSinc = pendientes[0]; // Procesamos la más antigua
+        
+        fetch(URL_GOOGLE_SHEET, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(guiaSinc)
+        })
+        .then(() => {
+            guiaSinc.Sincronizado = true;
+            guardarEnStorage();
+            statusNube.innerText = `✅ Pendiente sincronizada...`;
+            statusNube.style.color = "green";
+            setTimeout(sincronizarPendientes, 1000); // Llama al siguiente elemento
+        })
+        .catch(err => {
+            statusNube.innerText = "❌ Esperando conexión para sincronizar...";
             statusNube.style.color = "red";
         });
     }
+
+    // Revisa si hay envíos pendientes cada 15 segundos
+    setInterval(sincronizarPendientes, 15000);
 
     function eliminarGuia(indexVisual) {
         if (confirm("¿Eliminar este registro localmente? (No se borrará de la nube)")) {
@@ -351,7 +399,7 @@
                 input.classList.remove('error-input');
                 document.getElementById('mensajeError').style.display = "none";
             }, 1500);
-            input.value = ""; // Limpiar para el siguiente escaneo
+            input.value = ""; 
             return;
         }
 
@@ -365,7 +413,8 @@
             "Courier": courierIdentificado, 
             "Fecha": fechaLimpia, 
             "Hora": horaLimpia, 
-            "Estado": "NUEVA" 
+            "Estado": "NUEVA",
+            "Sincronizado": false
         };
 
         if (existe) {
@@ -407,20 +456,9 @@
         }
     }
 
-    // --- NUEVA LÓGICA PARA EVITAR EL ENTER MANUAL ---
-    input.addEventListener("input", () => {
-        clearTimeout(timerBusqueda);
-        // Cuando el lector termina de escribir (pausa de 100ms), procesa automáticamente.
-        timerBusqueda = setTimeout(() => {
-            if (input.value.trim() !== "") {
-                agregarGuia();
-            }
-        }, 100); 
-    });
-
+    // --- LÓGICA PROTEGIDA (SOLO CON ENTER DEL ESCÁNER) ---
     input.addEventListener("keypress", (e) => { 
         if (e.key === "Enter") {
-            clearTimeout(timerBusqueda);
             agregarGuia(); 
         }
     });
